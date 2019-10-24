@@ -1,3 +1,4 @@
+
 from bs4 import BeautifulSoup
 import requests
 import csv
@@ -47,8 +48,11 @@ class journal():
 		#return self.soup
 
 	def getpages(self):
-		size = self.soup.findAll("p", {"class": "u-text-sm u-reset-margin"})[0].text
+		size = self.soup.findAll("p", {"class": "u-text-sm u-reset-margin"})
+		# print(size)
+		size = size[0].text
 		self.pages = int(size.split()[-1])
+		# print(self.pages)
 		#return self.pages
 
 	def findpapers(self):
@@ -57,8 +61,8 @@ class journal():
 			page = requests.get(link)
 			self.papersoup = BeautifulSoup(page.text, 'html.parser')
 
-			papers = self.papersoup.findAll("h3", {"class": "c-teaser__title"})
-
+			papers = self.papersoup.findAll("h3", {"class": "c-teaser-old__title"})
+			# print(papers)
 			for item in papers:
 				content = item.findChildren("a" , recursive=False)[0]
 				pagelink = self.link+content['href']
@@ -66,9 +70,11 @@ class journal():
 				self.paper_link.append(pdflink)
 				self.paper_name.append(content.text)
 
-			self.paperqty = len(self.paper_link)
+		self.paperqty = len(self.paper_link)
 			# print(self.paper_name)
 			# print(self.paper_link)
+
+		# print("Papers: ",str(self.paperqty))
 
 		import csv
 		with open('./Links/'+self.name+'.csv', 'w') as writeFile:
@@ -83,20 +89,13 @@ class journal():
 
 from tqdm import tqdm
 import os
-filers = os.listdir("./Links")
+# filers = os.listdir("./")
 
 
-for i in tqdm(range(len(filers)-1,len(journal_names))):
+for i in tqdm(range(3)): #len(journal_names)
 	jour = journal(journal_names[i],journal_links[i])
 	jour.getsoup()
 	jour.getpages()
 	jour.findpapers()
 
 
-
-
-
-
-
-
-	
