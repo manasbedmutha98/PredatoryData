@@ -3,7 +3,15 @@ import numpy as np
 import csv
 import nltk
 import re
+import sys
 
+csv.field_size_limit(sys.maxsize)
+
+# Download models
+try:
+	nltk.download('averaged_perceptron_tagger')
+except:
+	print("Found POS tagset ...")
 
 # Tokenizers
 
@@ -108,66 +116,82 @@ def avg_sent_length(sents):
 from nltk.data import load
 tagdict = load('help/tagsets/upenn_tagset.pickle')
 
+names = os.listdir("/home/kaushal_modi/BMC_Subject_wise/")
+names.sort(reverse=True)
 
-TW = "/home/manas/Semester VII/Natural Language Processing/16110031_local.csv"
-LI = "/home/manas/Semester VII/Natural Language Processing/Project/Data Extraction/Links/3D Printing in Medicine.csv"
-CA = "/home/manas/Semester VII/Natural Language Processing/Project/Cancer.csv"
+for name in names:
+	print("Starting",name)
 
-with open(LI,"r") as f:
-	# for row in f:
-	# 	s = row
-	# 	print(s)
-	# 	print("\n")
-	reader=csv.reader(f)
-	for idx, row in enumerate(reader):
-		# print(row[1]),
-		# print(nltk.pos_tag(row[1].split(" ")))
-		if idx==0:
-			continue
+	HOME = "/home/kaushal_modi/BMC_Subject_wise/"+name+"/"
+	TARGET = "/home/bedmutha_manas/bmc_features/"+name+"/"
 
-		data = re.sub(r'[^A-Za-z0-9. ]+', ' ', row[1])
-		data = " ".join(data.split())
+	try:
+		os.mkdir(TARGET)
+	except:
+		print("Directory exists, will write at ",TARGET)
 
-		words = get_words(data)
-		sentences = get_sentences(data)
 
-		tags = get_tags(words)
-		print(idx, data[:20]) 
-		
-		# print()
+	head = ["idx", "tags", "Number of Tokens","Article Length", "TTR", "longest_word_lengths", "Zipf", "heap", "longest_sent_lengths", "avg_sent_length" ]
 
-		
-		
-		keys = list(tagdict.keys())
-		keys.sort()
+	files = os.listdir(HOME)
 
-		dist = {}
+	for journal in files:
+		with open(HOME+journal,"r") as f:
+			# for row in f:
+			# 	s = row
+			# 	print(s)
+			# 	print("\n")
+			print("Started ", HOME+journal)
+			reader=csv.reader(f)
 
-		for k in keys:
-			dist[k] = 0
+			with open(TARGET+journal,"wb") as w:
+				writer = csv.writer(w)
+				writer.writerow(head)
 
-		for tag in tags:
-			dist[tag[1]] += 1
+				for idx, row in enumerate(reader):
+				# print(row[1]),
+				# print(nltk.pos_tag(row[1].split(" ")))
+					if idx==0:
+						continue
 
-		tag_features = []
-		for k in keys:
-			tag_features.append(dist[k])
+					data = re.sub(r'[^A-Za-z0-9. ]+', ' ', row[1])
+					data = " ".join(data.split())
 
-		print(tag_features)
-		# possible_tags= set([tag[1] for tag in tags])
-		# for tag  in possible_tags:
-		# 	try:
-		# 		dist[tag] += 1
-		# 	except:
-		# 		dist[tag] = 1
+					try:
+						idx = data.find("Keywords")
+						data = data[0:idx]
 
-		# print(dist)
-		head = ["Number of Tokens","Article Length", "TTR", "longest_word_lengths", "Zipf", "heap", "longest_sent_lengths", "avg_sent_length" ]
-		values = [len(words), article_length(data), ttr(words), longest_word_lengths(words), zipf(words), heap(words), longest_sent_lengths(sentences), avg_sent_length(sentences)]
+					words = get_words(data)
+					sentences = get_sentences(data)
 
-		for i in range(len(head)):
-			print(head[i],": ",values[i])
+					tags = get_tags(words)
+					#print(idx, data[:20]) 
+					
+					keys = list(tagdict.keys())
+					keys.sort()
 
-		print()
+					dist = {}
 
-		
+					for k in keys:
+						dist[k] = 0
+
+					for tag in tags:
+						dist[tag[1]] += 1
+
+					tag_features = []
+					for k in keys:
+						tag_features.append(dist[k])
+
+					#print(tag_features)
+
+					# print(dist)
+					values = [idx, tag_features, len(words), article_length(data), ttr(words), longest_word_lengths(words), zipf(words), heap(words), longest_sent_lengths(sentences), avg_sent_length(sentences)]
+
+					writer.writerow(values)
+					# for i in range(len(head)):
+					# 	print(head[i],": ",values[i])
+
+					# print()
+		print("Finished processing ", journal)
+
+					
